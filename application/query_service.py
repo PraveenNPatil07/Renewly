@@ -1,8 +1,8 @@
-"""
-application/query_service.py — Natural-language query against the memory graph.
+"""Service responsible for executing natural-language queries against memory.
 
-SRP: this service has one job — call recall() and format results for humans.
-     It does NOT parse input or manage reminder timing.
+This service adheres to the Single Responsibility Principle: its only job is to
+call `recall()` to retrieve relevant items and format those results for humans.
+It does NOT parse input, ingest data, or manage reminder timing.
 """
 
 from __future__ import annotations
@@ -19,29 +19,40 @@ logger = logging.getLogger(__name__)
 
 
 class QueryService:
-    """
-    Translates a natural-language question into a memory recall and formats
-    the results into a readable, conversational answer.
+    """Translates a natural-language question into a formatted human-readable answer.
 
-    Constructor-injected MemoryPort (DIP).
+    Relies on constructor-injected MemoryPort (Dependency Inversion Principle)
+    to perform semantic search against the graph.
+
+    Attributes:
+        _memory: The MemoryPort adapter used for storage operations.
     """
 
     def __init__(self, memory_port: MemoryPort) -> None:
+        """Initializes the QueryService.
+
+        Args:
+            memory_port: The abstract MemoryPort instance used to interact with
+                the underlying graph database.
+        """
         self._memory = memory_port
 
     async def ask(self, question: str) -> str:
-        """
-        Ask a natural-language question and get a human-readable answer.
+        """Asks a natural-language question and returns a conversational answer.
+
+        This implements a "filter-then-format" pattern:
+        1. The MemoryPort filters the entire graph down to a few semantically relevant items.
+        2. The LLM is used strictly to format those specific items into a human-readable
+           narrative, preventing hallucination by tightly constraining its context window.
 
         Args:
-            question: e.g. "what subscriptions do I have?",
-                      "what is expiring in the next 7 days?"
+            question: The user's query, e.g. "what subscriptions do I have?".
 
         Returns:
-            A formatted string answer.
+            A formatted string answer provided by the LLM.
 
         Raises:
-            QueryError: If the recall operation fails.
+            QueryError: If the memory recall operation fails.
         """
         logger.info("recall query=%r", question[:80])
         try:

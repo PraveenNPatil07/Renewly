@@ -1,21 +1,19 @@
-"""
-scheduler/digest_job.py — Simulated reminder digest.
+"""Simulated reminder digest module for Renewly.
 
-This is a deliberately simple implementation: a single function that calls
-QueryService and logs/prints the result. A production system would plug
-this into a task queue (Celery, APScheduler, or a cloud scheduler) and
-deliver via email/SMS — but that is explicitly out of scope for the hackathon
-(see Non-Goals in the spec).
+This module provides a deliberately simple implementation of a background
+scheduler. It consists of functions that invoke the QueryService to
+generate and output a digest of upcoming renewals.
 
-Why "simulated" is still valuable for the demo:
-  - It exercises the full query → recall → format pipeline on a schedule.
-  - It proves the scheduler has no business logic of its own (SRP).
-  - The output is human-readable, so a judge can verify correctness visually.
+For a production environment, this module would be replaced or integrated
+with a robust task queue (e.g., Celery, APScheduler, or a cloud scheduler)
+and paired with actual delivery mechanisms (Email, SMS, Push). For the
+hackathon scope, it demonstrates the pipeline without the operational
+overhead of a real queue.
 
-Future work (clearly noted, not built):
-  - Replace print() with a real notification delivery (email, push, Slack).
-  - Use a production-grade task scheduler for reliability.
-  - Persist digest history so users can review past digests.
+Future improvements:
+- Replace standard out printing with a real notification delivery service.
+- Use a production-grade task scheduler for reliability.
+- Persist digest history to allow users to review past digests.
 """
 
 from __future__ import annotations

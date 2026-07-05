@@ -1,9 +1,8 @@
-"""
-domain/models.py — Pure Python domain model. No framework, no I/O.
+"""Pure Python domain model defining the core entities of Renewly.
 
-LifeAdminItem is the central entity of Renewly. Category is a data field,
-not a hardcoded branch, so adding new categories (e.g. "vehicle_registration")
-is an additive change to this enum — nothing else in the codebase needs editing.
+Provides the foundational data structures like `LifeAdminItem` and `Category`
+without any external framework or I/O dependencies, ensuring business logic 
+remains cleanly decoupled from the underlying storage mechanism.
 """
 
 from __future__ import annotations
@@ -14,7 +13,12 @@ from enum import Enum
 
 
 class Category(str, Enum):
-    """All recognised life-admin categories. Extend here only — OCP."""
+    """All recognised life-admin categories.
+
+    Categories are implemented as data fields (Enums) rather than class branches
+    to adhere to the Open-Closed Principle (OCP). Adding new categories only
+    requires appending to this Enum.
+    """
     SUBSCRIPTION = "subscription"
     FREE_TRIAL = "free_trial"
     WARRANTY = "warranty"
@@ -24,6 +28,7 @@ class Category(str, Enum):
 
 
 class ItemStatus(str, Enum):
+    """Lifecycle states of a life-admin item."""
     ACTIVE = "active"
     CANCELLED = "cancelled"
     EXPIRED_HANDLED = "expired_handled"
@@ -31,28 +36,45 @@ class ItemStatus(str, Enum):
 
 @dataclass(frozen=True)
 class LifeAdminItem:
-    """
-    Immutable value object representing one life-admin entry.
+    """Immutable value object representing a single life-admin entry.
 
-    `related_item_ids` is the graph edge that makes the knowledge-graph
-    approach earn its keep: a WARRANTY item can point at the receipt item
-    for its purchase, enabling cross-entity traversal like
-    "show me all warranties for my March laptop purchase."
+    `related_item_ids` is the graph edge that enables knowledge-graph traversal.
+    For instance, a WARRANTY item can point to the receipt item for its purchase.
+
+    Attributes:
+        item_id: Unique identifier for the item.
+        name: Human-readable name of the item.
+        category: The classification category (e.g., Category.SUBSCRIPTION).
+        vendor: The entity providing the item or service.
+        key_date: The primary date to track (renewal, expiry, or trial-end).
+        price: Financial cost associated with the item, or None if free.
+        notes: Additional contextual text for the item.
+        status: The lifecycle state of the item (e.g., active, cancelled).
+        related_item_ids: List of item IDs this item connects to via graph edges.
     """
     item_id: str
     name: str
     category: Category
     vendor: str
-    key_date: date           # renewal / expiry / trial-end date
+    key_date: date
     price: float | None
     notes: str
     status: ItemStatus
     related_item_ids: list[str] = field(default_factory=list)
 
     def is_stale(self, *, today: date, retention_days: int = 30) -> bool:
-        """
-        Returns True when the item is no longer ACTIVE and its key_date is
-        older than `retention_days` days — indicating it can be pruned from memory.
+        """Determines if the item is eligible for pruning from memory.
+
+        An item is considered stale if it is no longer ACTIVE and its key_date
+        is older than the specified retention window.
+
+        Args:
+            today: The reference date to compare against.
+            retention_days: Number of days past the key_date before an inactive
+                item is considered stale.
+
+        Returns:
+            True if the item is stale and can be safely forgotten, False otherwise.
         """
         if self.status == ItemStatus.ACTIVE:
             return False
@@ -60,17 +82,26 @@ class LifeAdminItem:
         return delta > retention_days
 
     def days_until_key_date(self, *, today: date) -> int:
-        """Positive = in the future; negative = already past."""
+        """Calculates the number of days from a reference date to the key_date.
+
+        Args:
+            today: The reference date.
+
+        Returns:
+            The integer number of days. Positive means the key_date is in the
+            future; negative means it is in the past.
+        """
         return (self.key_date - today).days
 
 
 @dataclass(frozen=True)
 class ReminderPreference:
-    """
-    Learned user preference for how many days in advance to remind.
+    """Learned user preference for reminder timing.
 
-    `last_feedback` carries the raw signal so the feedback service can store
-    it back into the graph and let the next improve() call propagate the change.
+    Attributes:
+        lead_days: Number of days in advance to remind the user.
+        last_feedback: The raw signal ("too_early", "too_late", "just_right")
+            so the feedback service can store it back into the graph.
     """
     lead_days: int
-    last_feedback: str | None = None   # "too_early" | "too_late" | "just_right"
+    last_feedback: str | None = None

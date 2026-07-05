@@ -1,10 +1,9 @@
-"""
-domain/exceptions.py — Domain-specific exception hierarchy.
+"""Domain-specific exception hierarchy for Renewly.
 
 All MemoryPort adapter exceptions are caught at the application layer and
-re-raised as one of these types, so the interface layer never sees raw
+re-raised as one of these types, ensuring the interface layer never sees raw
 Cognee or HTTP exceptions. This keeps CLI/API error handling simple and
-prevents implementation details from leaking upward.
+prevents infrastructure details from leaking upward.
 """
 
 
@@ -17,8 +16,17 @@ class MemoryOperationError(RenwlyError):
 
 
 class ItemNotFoundError(RenwlyError):
-    """Raised when a requested item_id does not exist in memory."""
+    """Raised when a requested item does not exist in memory.
+
+    Attributes:
+        item_id: The ID of the item that could not be found.
+    """
     def __init__(self, item_id: str) -> None:
+        """Initializes the ItemNotFoundError.
+
+        Args:
+            item_id: The ID of the item that was not found.
+        """
         self.item_id = item_id
         super().__init__(f"Item not found: {item_id!r}")
 

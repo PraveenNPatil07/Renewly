@@ -7,201 +7,169 @@
 [![Cognee](https://img.shields.io/badge/Powered_by-Cognee-purple.svg)](https://cognee.ai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Renewly** is an intelligent, personal memory agent designed to track anything with an expiry, renewal, or deadline attached. Whether it's software subscriptions, free trials, warranties, insurance policies, or domain renewals, Renewly remembers them all and lets you ask natural-language questions about what's coming up.
+## 🏗️ The Dual-Mode Architecture
 
----
+The single most differentiating engineering decision in Renewly is its dual-mode architecture: **one codebase, two completely swappable backends**. By changing a single environment variable (`RENEWLY_BACKEND`), the entire system seamlessly switches between a local, file-based data store (using SQLite/LanceDB) and a hosted Cognee Cloud backend. This satisfies both open-source privacy needs and scalable cloud deployment, while keeping application logic completely unaware of which graph storage is active.
 
-## ✨ Key Features
+## 🧠 Architecture & Lifecycle
 
-- 🧠 **Knowledge Graph-Powered Memory**: Models relationships between entities (e.g., a warranty linked to a specific laptop purchase) rather than storing flat lists.
-- 🗣️ **Natural Language Interface**: Add items and query your database using everyday language ("What subscriptions are renewing this month?").
-- 🔄 **Seamless Backend Switching**: Toggle between local (file-based) and cloud (Cognee Cloud) data stores with a single environment variable—no code changes required.
-- 🏗️ **Clean Architecture**: Built using a strict Five-Layer Dependency Inversion Principle design, making it highly testable and extensible.
-- 🎓 **Learning Agent**: Incorporates a feedback loop (`improve()`) to adjust reminder timings based on user input, evolving from a static tracker into an adaptive agent.
+![Renewly Architecture](./docs/renewly_architecture_diagram.svg)
 
----
+![Renewly Lifecycle](./docs/renewly_lifecycle_diagram.svg)
 
-## 🏗️ How It Works (Architecture)
+## 🚀 Quickstart
 
-### Why a Knowledge Graph (not a spreadsheet)?
-Existing tools like Bobby or Rocket Money track subscriptions as isolated, flat line items. They cannot easily answer questions like:
-> *"What electronics do I still have warranty coverage on, and which of those relate to the laptop I bought in March?"*
-
-Answering this requires understanding **relationships between entities across time**. A knowledge graph models these relationships as first-class data (e.g., a warranty linked to a purchase receipt, linked to a vendor). Renewly uses **Cognee** instead of a traditional relational database because **the relationships are the product**.
-
-### The Five-Layer Design (Dependency Inversion Principle)
-
-Renewly's architecture is strictly layered to decouple business logic from infrastructure:
-
-```text
-┌─────────────────────────────────────────────┐
-│  Interface Layer  (cli.py / api.py)          │  Entry points only — no business logic
-├─────────────────────────────────────────────┤
-│  Application Layer  (ingestion/query/...)    │  Orchestrates workflows
-├─────────────────────────────────────────────┤
-│  Domain Layer  (models.py / exceptions.py)   │  Pure Python — no framework, no I/O
-├─────────────────────────────────────────────┤
-│  Memory Abstraction  (MemoryPort ABC)         │  Abstract Interface — the only thing app imports
-├─────────────────────────────────────────────┤
-│  Memory Implementations  (local / cloud)     │  Swappable Cognee adapters, chosen by config
-└─────────────────────────────────────────────┘
-```
-
-**Why this layering matters:**
-1. **Lightning-fast tests**: Tests run in milliseconds against a `FakeMemoryPort` (no LLM, no network latency).
-2. **Effortless toggling**: Switching between local and cloud is done via a single environment variable (`RENEWLY_BACKEND`).
-3. **Future-proof**: Adding a new vector database or backend means writing one new adapter class, with zero changes to existing business logic.
-
-### The Four Memory Lifecycle Operations
-
-Renewly maps directly to four core memory operations:
-
-| Operation | Service | Description |
-|-----------|---------|-------------|
-| `remember()` | `IngestionService` | Parses raw natural text → `LifeAdminItem` → ingests into the Cognee graph. |
-| `recall()` | `QueryService` | Processes a natural-language query and returns a formatted answer. |
-| `improve()` | `FeedbackService` | Takes user feedback (e.g., "reminded too early") and adapts future reminder timing. |
-| `forget()` | `CleanupService` | Prunes stale items past their retention window. |
-
----
-
-## 🚀 Quick Start
-
-### 1. Installation
-
-Clone the repository and install the dependencies (including development tools like `pytest`):
+To get your personal agent running locally:
 
 ```bash
-git clone https://github.com/yourusername/renewly.git
-cd renewly
+# 1. Clone the repository
+git clone https://github.com/PraveenNPatil07/Renewly.git
+cd Renewly/renewly
+
+# 2. Install the package and dependencies
 pip install -e ".[dev]"
-```
 
-### 2. Configuration
-
-Copy the example environment file and configure it:
-
-```bash
+# 3. Configure environment variables
 cp .env.example .env
 ```
-*Note: At minimum, set your `OPENAI_API_KEY` in `.env` for accurate natural language parsing. If omitted, Renewly falls back to heuristic regex parsing.*
 
-### 3. Usage (Local Mode)
-
-By default, Renewly runs locally without needing cloud credentials. Use the CLI interface to interact with your agent:
+Open `.env` and fill in `OPENAI_API_KEY` to enable the LLM-powered text extraction (without it, the agent falls back to strict regex heuristics).
 
 ```bash
-# Add a subscription
-python -m interface.cli add "Netflix subscription renews on 2025-08-15, $15.99/month"
-
-# Add a warranty with a graph relationship
-python -m interface.cli add "AppleCare+ warranty expires 2026-01-10, for MacBook Pro"
-
-# Ask a natural-language question
+# 4. Run the local smoke test
 python -m interface.cli ask "what subscriptions do I have?"
-python -m interface.cli ask "what warranties are expiring in the next 6 months?"
+```
 
-# Record timing feedback (demonstrates the improve() lifecycle)
-python -m interface.cli feedback <item_id> too_early
+## 💻 Usage Examples
 
-# Run a reminder digest (demonstrates the scheduler)
+Below are real CLI invocations showing how to interact with your agent.
+
+### 📥 1. Ingesting an Item
+```bash
+python -m interface.cli add "Netflix subscription renews on 2025-08-15, $15.99/month"
+```
+**Output:**
+```text
+>> Ingesting: Netflix subscription renews on 2025-08-15, $15.99/month...
+
+[OK] Stored successfully!
+   Item ID  : b91acdca-4b95-44fa-9110-7fcbf175b219
+   Name     : Netflix
+   Category : subscription
+   Vendor   : Netflix
+   Key Date : 2025-08-15
+   Price    : $15.99
+```
+
+### 🗣️ 2. Asking Questions
+```bash
+python -m interface.cli ask "what subscriptions do I have?"
+```
+**Output:**
+```text
+[?] Querying: what subscriptions do I have?
+
+You currently have the following subscriptions:
+
+1. **Netflix**: 
+   - Price: $15.99 (active until August 15, 2025)
+   - Price: $15.99 (active starting July 15, 2026)
+
+2. **Gym Membership**: 
+   - Price: $50.00 (active starting July 10, 2026)
+
+These are the active subscriptions you have at the moment. If you need more details or assistance with anything else, feel free to ask!
+```
+
+### 🔄 3. Feedback Loop (Learning Agent)
+```bash
+python -m interface.cli feedback b91acdca-4b95-44fa-9110-7fcbf175b219 too_early
+```
+**Output:**
+```text
+[OK] Feedback recorded: item 'b91acdca-4b95-44fa-9110-7fcbf175b219' -> 'too_early'
+   The agent will adjust future reminder timing for this category.
+```
+
+### 📅 4. Running a Digest
+```bash
 python -m interface.cli digest
+```
+**Output:**
+```text
+digest generated at 2026-07-05 22:38
 
-# Prune stale items (demonstrates the forget() lifecycle)
+============================================================
+🗓️  RENEWLY REMINDER DIGEST  [2026-07-05 22:38]
+============================================================
+In the next 7 days, the following items are expiring:
+
+1. **Dell XPS Laptop** - This item is set to expire on **July 1, 2026**.
+2. **Gym Membership** - This subscription will expire on **July 10, 2026**.
+3. **Netflix Subscription** - One of your Netflix subscriptions is expiring on **July 15, 2026**.
+
+Make sure to take any necessary actions regarding these items before their expiration dates!
+============================================================
+```
+
+### 🧹 5. Cleaning Up Stale Items
+```bash
 python -m interface.cli cleanup
 ```
-
-### 4. Usage (Cloud Mode)
-
-Switching to Cognee Cloud is instantaneous. Set your backend and provide your cloud keys:
-
-```bash
-export RENEWLY_BACKEND=cloud
-export COGNEE_CLOUD_API_KEY=your-key
-export COGNEE_CLOUD_URL=https://api.cognee.ai
-
-# Use the exact same commands as above — no code changes needed!
-python -m interface.cli ask "what's expiring this month?"
-```
-
-### 5. Running the REST API
-
-Renewly also includes a FastAPI server for programmatic access:
-
-```bash
-uvicorn interface.api:app --reload --port 8000
-```
-Then open your browser and navigate to the interactive Swagger documentation at: [http://localhost:8000/docs](http://localhost:8000/docs)
-
----
-
-## 🧪 Testing
-
-Renewly boasts an extremely fast test suite. All tests run against an in-memory `FakeMemoryPort`, which empirically proves that the business logic is entirely decoupled from Cognee and LLM calls.
-
-```bash
-python -m pytest tests/ -v
-```
-
-Expected output:
+**Output:**
 ```text
-tests/test_ingestion_service.py  ✓  parsing + remember() path
-tests/test_query_service.py      ✓  recall() + formatting
-tests/test_feedback_service.py   ✓  improve() signal routing
-tests/test_cleanup_service.py    ✓  stale detection + forget()
-```
+[~] Running cleanup -- scanning for stale items...
 
----
+[OK] Nothing to prune -- memory is clean.
+```
 
 ## 📁 Project Structure
 
 ```text
 renewly/
-├── config.py                     # Env-var reader → MemoryPort adapter mapping
-├── domain/
-│   ├── models.py                 # Core models: LifeAdminItem, Category, ItemStatus
-│   └── exceptions.py             # Domain-specific exception hierarchy
-├── memory/
-│   ├── port.py                   # MemoryPort ABC (the core interface)
-│   ├── local_adapter.py          # Local file-based Cognee implementation
-│   ├── cloud_adapter.py          # Cognee Cloud implementation
-│   └── factory.py                # Dependency injection factory
-├── application/
-│   ├── ingestion_service.py      # Parses text → creates LifeAdminItem + remember()
-│   ├── query_service.py          # Executes recall() + text formatting
-│   ├── feedback_service.py       # Executes improve() + validation
-│   └── cleanup_service.py        # Identifies stale items + executes forget()
-├── interface/
-│   ├── cli.py                    # Command Line Interface (CLI) entry point
-│   └── api.py                    # FastAPI routes and endpoints
-├── scheduler/
-│   └── digest_job.py             # Simulated cron-job for reminder digests
-└── tests/
-    ├── fakes/fake_memory_port.py # In-memory test double for zero-latency testing
-    ├── test_ingestion_service.py
-    ├── test_query_service.py
-    ├── test_feedback_service.py
-    └── test_cleanup_service.py
+├── config.py                     # Configures env vars and selects MemoryPort adapter
+├── domain/                       # Pure python domain logic and models (no I/O dependencies)
+├── memory/                       # The MemoryPort ABC interface and swappable local/cloud adapters
+├── application/                  # Core services (Ingestion, Query, Feedback, Cleanup) orchestrating workflows
+├── interface/                    # Entry points (CLI and FastAPI routes) containing zero business logic
+├── scheduler/                    # Simulated background tasks (e.g., cron-job reminder digests)
+└── tests/                        # Fast, adapter-mocked test suite decoupled from external services
 ```
 
----
+## 🎯 Design Decisions
 
-## 🔒 Security & Scalability
+| Decision | Reason |
+|----------|--------|
+| **Dependency Inversion (MemoryPort)** | Services depend on an abstract interface, not Cognee directly. Enables mock testing and switching backends instantly. |
+| **Backend Toggle (`RENEWLY_BACKEND`)** | A single env var wires the correct adapter at startup, solving local privacy vs cloud scalability without touching business logic. |
+| **`related_item_ids` as a Graph Edge** | Makes relationships first-class citizens instead of bolting them on via SQL foreign keys, allowing cross-entity queries. |
+| **`improve()` as a Core Method** | Prevents Renewly from being a static database by introducing a feedback loop that adjusts reminder cadences, making it a true *agent*. |
+| **Category as Data, Not Code** | Categories are Enums (`Category.SUBSCRIPTION`, etc.), not polymorphic classes, drastically reducing boilerplate and keeping logic central. |
 
-### Security Notes
-- **Secrets Management**: Real API keys should strictly remain in `.env` (which is in `.gitignore`). Only `.env.example` is committed.
-- **Production Readiness**: A production deployment requires **encryption at rest** (since life-admin data can include prices and account identifiers) and **per-user namespacing** in the Cognee dataset.
+## 🧪 Testing
 
-### Scalability Roadmap
-Scaling this architecture to a multi-user, multi-tenant system requires only three additive changes (none of which require rewriting the core domain or application layer):
-1. Add `user_id` to `LifeAdminItem` and to all `MemoryPort` interface methods.
-2. Namespace the underlying Cognee dataset per user (e.g., `dataset_name=f"renewly_{user_id}"`).
-3. Add robust authentication middleware at the interface layer (e.g., via FastAPI).
+Renewly embraces strict layering to make testing blazing fast. You do not need real Cognee or OpenAI calls to run the standard unit test suite.
 
----
+Run the fast unit suite (uses in-memory `FakeMemoryPort`):
+```bash
+pytest tests/
+```
 
-## 🔮 Future Work
+Run the slow integration test suite (actually touches Cognee and the LLM, making network calls):
+```bash
+pytest tests/ -m integration
+```
 
-- **Real-Time Notifications**: Replace standard out `print()` statements in `digest_job.py` with actual Email, Push Notification, or Slack integrations.
-- **Automated Document Ingestion**: Introduce an OAuth inbox scanner or PDF text extraction pipeline that automatically feeds data into the `IngestionService`.
-- **Production Scheduler**: Upgrade the mock `asyncio.sleep` loop to a robust task queue like Celery, APScheduler, or AWS EventBridge.
+## 🚧 Known Limitations / Explicit Non-Goals
+
+We believe an honest README builds trust. Here is exactly what Renewly deliberately **does not** do at this time:
+- **No email ingestion**: There is no OAuth inbox scanning. Ingestion happens strictly via explicit CLI/API calls.
+- **No real push notifications**: The digest scheduler simply `print()`s to stdout. It does not send SMS, Slack, or Email notifications.
+- **No multi-user authentication**: The system is currently single-user. Scaling to multi-user requires namespacing the graph and adding interface auth, which are intentionally out of scope for this hackathon pass.
+
+## 🙏 Credits
+- Built for the **WeMakeDevs** Hackathon.
+- Powered fundamentally by the **Cognee** knowledge graph framework.
+
+## 📜 License
+MIT License. See [LICENSE](LICENSE) for details.

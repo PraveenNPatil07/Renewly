@@ -1,16 +1,15 @@
-"""
-memory/cloud_adapter.py — CloudCogneeAdapter: wraps Cognee Cloud.
+"""Cloud-based memory adapter for Renewly using Cognee Cloud.
 
-Updated for Cognee 1.2.2 API.
+Connects to a hosted Cognee instance (1.2.2 API). This allows seamless switching 
+between local and cloud modes via the RENEWLY_BACKEND environment variable.
 
-Connection details come from platform.cognee.ai/api-keys → "Connection Details":
-  - API Base URL  → COGNEE_CLOUD_URL       (tenant-specific URL)
-  - API Key       → COGNEE_CLOUD_API_KEY   (X-Api-Key header)
-  - Tenant ID     → COGNEE_CLOUD_TENANT_ID (X-Tenant-Id header)
-  - User ID       → COGNEE_CLOUD_USER_ID   (optional)
+Connection details (from platform.cognee.ai/api-keys):
+  - COGNEE_CLOUD_URL: API Base URL (tenant-specific URL)
+  - COGNEE_CLOUD_API_KEY: API Key (X-Api-Key header)
+  - COGNEE_CLOUD_TENANT_ID: Tenant ID (X-Tenant-Id header)
+  - COGNEE_CLOUD_USER_ID: User ID (optional)
 
-LLM can be OpenRouter or OpenAI — controlled by the same LLM_* env vars
-as local mode (see local_adapter._configure_llm for details).
+LLM configuration leverages the same LLM_* environment variables as the local mode.
 """
 
 from __future__ import annotations
@@ -32,11 +31,17 @@ logger = logging.getLogger(__name__)
 
 
 class CloudCogneeAdapter(MemoryPort):
-    """
-    MemoryPort implementation backed by Cognee Cloud (1.2.2).
+    """MemoryPort implementation backed by Cognee Cloud (1.2.2).
 
-    LSP: same method signatures and exception types as LocalCogneeAdapter.
-    Application code is entirely unaware which adapter is active.
+    Adheres strictly to the MemoryPort contract (LSP), ensuring no semantic
+    differences compared to the LocalCogneeAdapter.
+
+    Attributes:
+        _url: The Cognee Cloud API Base URL.
+        _api_key: The authentication key for Cognee Cloud.
+        _tenant_id: The tenant identifier.
+        _user_id: Optional user identifier for namespacing.
+        _initialized: Boolean flag indicating if lazy initialization has occurred.
     """
 
     def __init__(
@@ -46,6 +51,14 @@ class CloudCogneeAdapter(MemoryPort):
         tenant_id: str | None = None,
         user_id: str | None = None,
     ) -> None:
+        """Initializes the adapter with cloud connection details.
+
+        Args:
+            url: The Cognee Cloud API Base URL.
+            api_key: The authentication key for Cognee Cloud.
+            tenant_id: The tenant identifier.
+            user_id: Optional user identifier for namespacing.
+        """
         self._url = url.rstrip("/")
         self._api_key = api_key
         self._tenant_id = tenant_id
@@ -53,6 +66,11 @@ class CloudCogneeAdapter(MemoryPort):
         self._initialized = False
 
     async def _ensure_initialized(self) -> None:
+        """Performs lazy initialization of Cognee Cloud configuration.
+
+        Ensures Cognee is configured exactly once before the first operation.
+        Sets up LLM endpoints, API keys, and cloud authentication headers.
+        """
         if self._initialized:
             return
 
@@ -85,6 +103,14 @@ class CloudCogneeAdapter(MemoryPort):
         )
 
     async def remember(self, item: LifeAdminItem) -> None:
+        """Ingests a structured LifeAdminItem into the cloud memory graph.
+
+        Args:
+            item: The LifeAdminItem to store.
+
+        Raises:
+            MemoryOperationError: If the ingestion operation fails.
+        """
         try:
             await self._ensure_initialized()
             import cognee
@@ -99,6 +125,17 @@ class CloudCogneeAdapter(MemoryPort):
             raise MemoryOperationError(f"Cloud remember failed: {exc}") from exc
 
     async def recall(self, query: str) -> list[dict[str, Any]]:
+        """Answers a natural-language query against the cloud memory graph.
+
+        Args:
+            query: The user's natural language question.
+
+        Returns:
+            A list of result dictionaries normalised to a consistent shape.
+
+        Raises:
+            QueryError: If the search operation fails.
+        """
         try:
             await self._ensure_initialized()
             import cognee
@@ -134,6 +171,11 @@ class CloudCogneeAdapter(MemoryPort):
                 dist = 1.0 - (dot / (norm_a * norm_b))
                 
                 logger.info(f"Distance: {dist:.4f} | Item: {item.get('name')}")
+                
+                # We enforce a strict cosine distance threshold of 0.85 for semantic relevance.
+                # In dense vector space (1536d), anything >0.85 distance (or <0.15 similarity)
+                # is generally too semantically distant to be considered a true match to the
+                # user's intent. This prevents false positives from polluting the LLM's context window.
                 if dist < 0.85:
                     filtered_items.append(item)
 
@@ -144,6 +186,11 @@ class CloudCogneeAdapter(MemoryPort):
             return []
 
     async def list_all_items(self) -> list[dict[str, Any]]:
+        """Retrieves all items currently stored in cloud memory without semantic filtering.
+
+        Returns:
+            A list of dictionary representations of all items.
+        """
         try:
             await self._ensure_initialized()
             import cognee
@@ -158,6 +205,14 @@ class CloudCogneeAdapter(MemoryPort):
             return []
 
     async def improve(self, feedback: dict) -> None:
+        """Adjusts stored preferences based on a user feedback signal.
+
+        Args:
+            feedback: A dictionary containing at minimum "item_id" and "signal".
+
+        Raises:
+            FeedbackError: If the feedback recording fails.
+        """
         try:
             await self._ensure_initialized()
             import cognee
@@ -176,6 +231,15 @@ class CloudCogneeAdapter(MemoryPort):
             raise FeedbackError(f"Cloud improve failed: {exc}") from exc
 
     async def forget(self, item_id: str) -> None:
+        """Prunes a specific item from active cloud memory by its item_id.
+
+        Args:
+            item_id: The unique identifier of the item to delete.
+
+        Raises:
+            ItemNotFoundError: If the item_id does not exist in memory.
+            MemoryOperationError: On other storage failures.
+        """
         try:
             await self._ensure_initialized()
             import cognee

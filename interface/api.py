@@ -1,13 +1,13 @@
-"""
-interface/api.py — FastAPI REST layer.
+"""FastAPI REST interface layer for Renewly.
 
-Thin routes — zero business logic. Each endpoint:
-1. Parses the request
-2. Calls the appropriate application service
-3. Returns the result
+This module provides a programmatic HTTP interface to the application.
+It strictly adheres to the Single Responsibility Principle: each route is
+a thin wrapper that parses the HTTP request, calls the appropriate
+application service, and returns the result.
 
-The payoff of the layered architecture: these routes call the exact same
-services as the CLI, proving the interface layer is genuine plumbing.
+The layered architecture ensures these routes execute the exact same
+business logic as the CLI, proving the interface layer is purely plumbing
+with zero business logic of its own.
 """
 
 from __future__ import annotations

@@ -1,19 +1,9 @@
-"""
-memory/port.py — The MemoryPort abstract interface.
+"""The MemoryPort abstract interface for Renewly.
 
-This is the most important file in the project. Everything in the application
-and domain layers depends on this interface — never on a concrete Cognee client.
-That is the Dependency Inversion Principle applied for real:
-
-  - Business logic (services) → imports MemoryPort (abstract)
-  - Adapters (local, cloud)   → implement MemoryPort (concrete)
-  - Config / factory          → wires the correct adapter at startup
-
-Adding a new backend (e.g. Pinecone, Weaviate) means writing one new class
-that satisfies this interface. No existing code changes.
-
-The interface is intentionally narrow (ISP): exactly the four lifecycle
-operations this project actually uses. No speculative methods.
+This module defines the contract that all storage backends (local, cloud, etc.)
+must satisfy. It enforces the Dependency Inversion Principle: application services
+depend only on this abstract interface, never on a concrete client. This ensures
+high testability and seamless backend toggling.
 """
 
 from abc import ABC, abstractmethod
@@ -27,42 +17,53 @@ class MemoryPort(ABC):
 
     @abstractmethod
     async def remember(self, item: LifeAdminItem) -> None:
-        """
-        Ingest a structured LifeAdminItem into the memory graph.
+        """Ingests a structured LifeAdminItem into the memory graph.
+
+        Args:
+            item: The LifeAdminItem to store.
 
         Raises:
-            domain.exceptions.MemoryOperationError on failure.
+            MemoryOperationError: If the underlying storage operation fails.
         """
 
     @abstractmethod
     async def recall(self, query: str) -> list[dict]:
-        """
-        Answer a natural-language query against the memory graph.
+        """Answers a natural-language query against the memory graph.
 
-        Returns a list of result dicts (keys vary by backend — adapter is
-        responsible for normalising to a consistent shape).
+        This method applies semantic relevance filtering to return only items
+        that match the semantic intent of the query.
+
+        Args:
+            query: The user's natural language question.
+
+        Returns:
+            A list of result dictionaries normalised to a consistent shape.
 
         Raises:
-            domain.exceptions.QueryError on failure.
+            QueryError: If the search operation fails.
         """
 
     @abstractmethod
     async def improve(self, feedback: dict) -> None:
-        """
-        Adjust stored preferences or weights based on a user feedback signal.
+        """Adjusts stored preferences based on a user feedback signal.
 
-        `feedback` must contain at minimum:
-            - "item_id": str
-            - "signal": "too_early" | "too_late" | "just_right"
+        Args:
+            feedback: A dictionary containing at minimum "item_id" (str) and
+                "signal" ("too_early" | "too_late" | "just_right").
 
         Raises:
-            domain.exceptions.FeedbackError on failure.
+            FeedbackError: If the feedback recording fails.
         """
 
+    # We deliberately split list_all_items() from recall() to bypass semantic search.
+    # The cleanup service needs to inspect absolutely everything in memory to find
+    # stale items. If we routed this through recall(), valid stale items would be
+    # filtered out by the vector relevance threshold simply because they didn't semantically
+    # match a search query. list_all_items() avoids this relevance filter completely
+    # (e.g. by using a raw text-match enumeration like cognee.search("item_id:")).
     @abstractmethod
     async def list_all_items(self) -> list[dict[str, Any]]:
-        """
-        Retrieve all items currently stored in memory.
+        """Retrieves all items currently stored in memory without semantic filtering.
 
         Returns:
             A list of dictionary representations of all items.
@@ -70,10 +71,12 @@ class MemoryPort(ABC):
 
     @abstractmethod
     async def forget(self, item_id: str) -> None:
-        """
-        Prune a specific item from active memory by its item_id.
+        """Prunes a specific item from active memory by its item_id.
+
+        Args:
+            item_id: The unique identifier of the item to delete.
 
         Raises:
-            domain.exceptions.ItemNotFoundError if item_id does not exist.
-            domain.exceptions.MemoryOperationError on other failures.
+            ItemNotFoundError: If the item_id does not exist.
+            MemoryOperationError: On other storage failures.
         """

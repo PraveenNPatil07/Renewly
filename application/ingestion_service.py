@@ -1,11 +1,11 @@
-"""
-application/ingestion_service.py — Turns raw text into a LifeAdminItem.
+"""Service responsible for parsing raw text and storing it as a LifeAdminItem.
 
-SRP: this service has one job — parse raw input and store it in memory.
-     It does NOT decide reminder timing (that is ReminderEngine's job).
+This service adheres to the Single Responsibility Principle: its only job is to
+parse raw input and persist it via the MemoryPort. It does NOT decide reminder
+timing or query data.
 
-The LLM-based parsing is isolated in `_parse_raw_text()` so it can be
-tested in isolation and swapped without touching the rest of the service.
+The LLM-based parsing logic is isolated in module-level helper functions,
+ensuring the service remains highly testable and decoupled from external APIs.
 """
 
 from __future__ import annotations
@@ -26,14 +26,23 @@ logger = logging.getLogger(__name__)
 
 
 class IngestionService:
-    """
-    Parses raw text input → LifeAdminItem, then persists via MemoryPort.
+    """Parses raw text input into a LifeAdminItem and persists it.
 
-    Constructor-injected MemoryPort (DIP): tests pass FakeMemoryPort,
-    production passes LocalCogneeAdapter or CloudCogneeAdapter.
+    Relies on constructor-injected MemoryPort (Dependency Inversion Principle),
+    allowing tests to pass a FakeMemoryPort while production passes a concrete
+    adapter (local or cloud).
+
+    Attributes:
+        _memory: The MemoryPort adapter used for storage operations.
     """
 
     def __init__(self, memory_port: MemoryPort) -> None:
+        """Initializes the IngestionService.
+
+        Args:
+            memory_port: The abstract MemoryPort instance used to interact with
+                the underlying graph database.
+        """
         self._memory = memory_port
 
     async def remember_item(
@@ -43,18 +52,21 @@ class IngestionService:
         price: float | None = None,
         related_item_ids: list[str] | None = None,
     ) -> LifeAdminItem:
-        """
-        Parse `raw_text` into a structured LifeAdminItem and persist it.
+        """Parses `raw_text` into a structured LifeAdminItem and persists it.
 
         Args:
-            raw_text: Free-form description — manual entry, pasted email, PDF text.
-            related_item_ids: Optional explicit graph edges to other items.
+            raw_text: Free-form description of the item (e.g., manual entry,
+                pasted email, or PDF text).
+            price: Optional explicit price. If provided, overrides any price
+                extracted from the raw text.
+            related_item_ids: Optional explicit graph edges to other items,
+                allowing manual linking (e.g., warranty -> receipt).
 
         Returns:
-            The fully-constructed LifeAdminItem that was stored.
+            The fully-constructed LifeAdminItem that was stored in memory.
 
         Raises:
-            IngestionError: If parsing fails or memory write fails.
+            IngestionError: If text parsing fails or the memory write fails.
         """
         try:
             parsed = _parse_raw_text(raw_text)
@@ -94,16 +106,20 @@ class IngestionService:
 # ---------------------------------------------------------------------------
 
 def _parse_raw_text(raw_text: str) -> dict[str, Any]:
-    """
-    Extract structured fields from free-form text.
+    """Extracts structured fields from free-form text.
 
     Strategy (in priority order):
-    1. If an LLM API key is present → use the LLM prompt.
-       Supports OpenAI directly or OpenRouter (set LLM_ENDPOINT + OPENROUTER_API_KEY).
-    2. Otherwise → fall back to deterministic regex heuristics.
+    1. If an LLM API key is present, use the LLM to parse the text.
+    2. Otherwise, fall back to deterministic regex heuristics.
 
-    This keeps the service testable without API keys: FakeMemoryPort tests
-    use the regex path by default (no env vars set in CI).
+    This ensures the service remains functional and testable even without
+    valid API keys.
+
+    Args:
+        raw_text: The free-form text to parse.
+
+    Returns:
+        A dictionary containing the extracted fields (name, category, etc.).
     """
     api_key = (
         os.getenv("LLM_API_KEY")
@@ -120,13 +136,19 @@ def _parse_raw_text(raw_text: str) -> dict[str, Any]:
 
 
 def _parse_with_llm(raw_text: str, api_key: str) -> dict[str, Any]:
-    """
-    Call an LLM to extract structured fields from free text.
+    """Calls an LLM to extract structured fields from free text.
 
-    Works with:
-      - OpenAI directly (OPENAI_API_KEY set, no LLM_ENDPOINT)
-      - OpenRouter      (OPENROUTER_API_KEY + LLM_ENDPOINT=https://openrouter.ai/api/v1)
-      - Any OpenAI-compatible endpoint (LLM_API_KEY + LLM_ENDPOINT)
+    Supports OpenAI and OpenAI-compatible endpoints (like OpenRouter).
+
+    Args:
+        raw_text: The free-form text to parse.
+        api_key: The authentication key for the LLM provider.
+
+    Returns:
+        A dictionary containing the extracted fields.
+
+    Raises:
+        ValueError: If the LLM returns no content or invalid JSON.
     """
     import openai  # only imported when API key is present
 
@@ -162,10 +184,15 @@ def _parse_with_llm(raw_text: str, api_key: str) -> dict[str, Any]:
 
 
 def _parse_with_heuristics(raw_text: str) -> dict[str, Any]:
-    """
-    Deterministic regex-based field extraction — no external dependencies.
+    """Uses deterministic regex to extract fields from free text.
 
-    Used in tests (no API key) and as fallback when LLM is unavailable.
+    Acts as a fallback when the LLM is unavailable or unconfigured.
+
+    Args:
+        raw_text: The free-form text to parse.
+
+    Returns:
+        A dictionary containing the extracted fields.
     """
     text_lower = raw_text.lower()
 
@@ -220,7 +247,17 @@ def _parse_with_heuristics(raw_text: str) -> dict[str, Any]:
 
 
 def _coerce_date(value: Any) -> date:
-    """Convert various date representations to a Python date object."""
+    """Converts various date representations to a Python date object.
+
+    Args:
+        value: The date value (can be a string or a date object).
+
+    Returns:
+        A valid Python date object.
+
+    Raises:
+        IngestionError: If the date string cannot be parsed.
+    """
     if isinstance(value, date):
         return value
     s = str(value).strip()

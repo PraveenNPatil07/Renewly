@@ -1,12 +1,12 @@
-"""
-application/feedback_service.py — Records user feedback to improve reminder timing.
+"""Service responsible for recording user feedback to improve reminder timing.
 
-SRP: this service has one job — translate a user's feedback signal into a
-     memory improve() call. It does not parse PDFs, it does not query items.
+This service adheres to the Single Responsibility Principle: its only job is to
+translate a user's feedback signal into a memory `improve()` call. It does not
+parse input documents or query items.
 
-The `improve()` call is the demo's centerpiece: it is the operation that
-most naive submissions skip or fake, and it is what makes Renewly a learning
-agent rather than a static list tracker.
+The `improve()` call is the centerpiece of the agent's learning capability,
+allowing Renewly to adapt its reminder cadences over time rather than acting
+as a static list tracker.
 """
 
 from __future__ import annotations
@@ -22,26 +22,35 @@ VALID_SIGNALS = frozenset({"too_early", "too_late", "just_right"})
 
 
 class FeedbackService:
-    """
-    Records a user's timing feedback for a specific item, triggering an
-    improve() call so future reminders adapt.
+    """Records user timing feedback to adjust future reminders.
 
-    Constructor-injected MemoryPort (DIP).
+    Relies on constructor-injected MemoryPort (Dependency Inversion Principle)
+    to perform the underlying `improve()` operation on the graph.
+
+    Attributes:
+        _memory: The MemoryPort adapter used for storage operations.
     """
 
     def __init__(self, memory_port: MemoryPort) -> None:
+        """Initializes the FeedbackService.
+
+        Args:
+            memory_port: The abstract MemoryPort instance used to interact with
+                the underlying graph database.
+        """
         self._memory = memory_port
 
     async def record_feedback(self, item_id: str, signal: str) -> None:
-        """
-        Persist a feedback signal for `item_id`.
+        """Persists a feedback signal for a specific item.
 
         Args:
-            item_id: The item the feedback applies to.
-            signal:  One of "too_early", "too_late", "just_right".
+            item_id: The unique identifier of the item the feedback applies to.
+            signal: The feedback type. Must be one of "too_early", "too_late",
+                or "just_right".
 
         Raises:
-            FeedbackError: If the signal is invalid or the improve() call fails.
+            FeedbackError: If the provided signal is invalid or if the
+                underlying memory `improve()` call fails.
         """
         if signal not in VALID_SIGNALS:
             raise FeedbackError(

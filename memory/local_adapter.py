@@ -1,15 +1,14 @@
-"""
-memory/local_adapter.py — LocalCogneeAdapter: wraps local file-based Cognee.
+"""Local file-based memory adapter for Renewly using Cognee 1.2.2.
 
-Updated for Cognee 1.2.2 API:
-  - cognee.config.data_root_directory(path)   replaces old set_data_path()
-  - cognee.config.set_llm_provider()          sets LLM provider (openai/litellm)
-  - cognee.config.set_llm_api_key()           sets API key
-  - cognee.config.set_llm_endpoint()          sets base URL (for OpenRouter etc.)
-  - cognee.config.set_llm_model()             sets model name
+This adapter implements the MemoryPort interface using a self-hosted instance
+of Cognee, writing data locally (typically SQLite and LanceDB). It is fully
+interchangeable with the cloud adapter via the RENEWLY_BACKEND environment variable.
 
-OpenRouter usage: set LLM_PROVIDER=openai, LLM_API_KEY=<openrouter key>,
-  LLM_ENDPOINT=https://openrouter.ai/api/v1, LLM_MODEL=<model slug>.
+Supported configurations (e.g. for OpenRouter):
+  - LLM_PROVIDER=openai
+  - LLM_API_KEY=<openrouter key>
+  - LLM_ENDPOINT=https://openrouter.ai/api/v1
+  - LLM_MODEL=<model slug>
 """
 
 from __future__ import annotations
@@ -31,14 +30,23 @@ logger = logging.getLogger(__name__)
 
 
 class LocalCogneeAdapter(MemoryPort):
-    """
-    MemoryPort implementation backed by local (self-hosted) Cognee 1.2.2.
+    """MemoryPort implementation backed by local (self-hosted) Cognee 1.2.2.
 
-    LSP: satisfies every MemoryPort contract — same signatures, same
-    exception types as CloudCogneeAdapter.
+    Adheres strictly to the MemoryPort contract (LSP), ensuring no semantic
+    differences compared to the CloudCogneeAdapter.
+
+    Attributes:
+        _data_path: The local filesystem path where Cognee stores its graphs and vectors.
+        _initialized: Boolean flag indicating if lazy initialization has occurred.
     """
 
     def __init__(self, data_path: str | None = None) -> None:
+        """Initializes the adapter.
+
+        Args:
+            data_path: Optional explicit path for Cognee data. Defaults to
+                COGNEE_DATA_PATH from environment or ~/.renewly/cognee_data.
+        """
         self._data_path = data_path or os.getenv(
             "COGNEE_DATA_PATH",
             os.path.join(os.path.expanduser("~"), ".renewly", "cognee_data"),
@@ -46,7 +54,11 @@ class LocalCogneeAdapter(MemoryPort):
         self._initialized = False
 
     async def _ensure_initialized(self) -> None:
-        """Lazy init — configure Cognee once before first operation."""
+        """Performs lazy initialization of Cognee configuration.
+
+        Ensures Cognee is configured exactly once before the first operation.
+        Sets up LLM endpoints, API keys, and data paths.
+        """
         if self._initialized:
             return
         import cognee
@@ -64,6 +76,14 @@ class LocalCogneeAdapter(MemoryPort):
         logger.info("LocalCogneeAdapter initialized at %s", self._data_path)
 
     async def remember(self, item: LifeAdminItem) -> None:
+        """Ingests a structured LifeAdminItem into the local memory graph.
+
+        Args:
+            item: The LifeAdminItem to store.
+
+        Raises:
+            MemoryOperationError: If the ingestion operation fails.
+        """
         try:
             await self._ensure_initialized()
             import cognee
@@ -77,6 +97,17 @@ class LocalCogneeAdapter(MemoryPort):
             raise MemoryOperationError(f"Local remember failed: {exc}") from exc
 
     async def recall(self, query: str) -> list[dict]:
+        """Answers a natural-language query against the local memory graph.
+
+        Args:
+            query: The user's natural language question.
+
+        Returns:
+            A list of result dictionaries normalised to a consistent shape.
+
+        Raises:
+            QueryError: If the search operation fails.
+        """
         try:
             await self._ensure_initialized()
             import cognee
@@ -111,6 +142,11 @@ class LocalCogneeAdapter(MemoryPort):
                 dist = 1.0 - (dot / (norm_a * norm_b))
                 
                 logger.info(f"Distance: {dist:.4f} | Item: {item.get('name')}")
+                
+                # We enforce a strict cosine distance threshold of 0.85 for semantic relevance.
+                # In dense vector space (1536d), anything >0.85 distance (or <0.15 similarity)
+                # is generally too semantically distant to be considered a true match to the
+                # user's intent. This prevents false positives from polluting the LLM's context window.
                 if dist < 0.85:
                     filtered_items.append(item)
 
@@ -121,6 +157,14 @@ class LocalCogneeAdapter(MemoryPort):
             raise QueryError(f"Local recall failed: {exc}") from exc
 
     async def improve(self, feedback: dict) -> None:
+        """Adjusts stored preferences based on a user feedback signal.
+
+        Args:
+            feedback: A dictionary containing at minimum "item_id" and "signal".
+
+        Raises:
+            FeedbackError: If the feedback recording fails.
+        """
         try:
             await self._ensure_initialized()
             import cognee
@@ -139,6 +183,15 @@ class LocalCogneeAdapter(MemoryPort):
             raise FeedbackError(f"Local improve failed: {exc}") from exc
 
     async def forget(self, item_id: str) -> None:
+        """Prunes a specific item from active memory by its item_id.
+
+        Args:
+            item_id: The unique identifier of the item to delete.
+
+        Raises:
+            ItemNotFoundError: If the item_id does not exist in memory.
+            MemoryOperationError: On other storage failures.
+        """
         try:
             await self._ensure_initialized()
             import cognee
@@ -161,6 +214,11 @@ class LocalCogneeAdapter(MemoryPort):
             raise MemoryOperationError(f"Local forget failed: {exc}") from exc
 
     async def list_all_items(self) -> list[dict[str, Any]]:
+        """Retrieves all items currently stored in memory without semantic filtering.
+
+        Returns:
+            A list of dictionary representations of all items.
+        """
         try:
             await self._ensure_initialized()
             import cognee
@@ -178,21 +236,12 @@ class LocalCogneeAdapter(MemoryPort):
 # ---------------------------------------------------------------------------
 
 def _configure_llm(cognee_module) -> None:
-    """
-    Configure the LLM and Embedding provider from environment variables.
+    """Configures the LLM and Embedding provider from environment variables.
 
     Supports OpenRouter for both chat completions and embeddings.
 
-    Environment variables:
-      LLM_API_KEY / OPENROUTER_API_KEY  — API key for LLM (chat)
-      LLM_ENDPOINT                       — Base URL (https://openrouter.ai/api/v1)
-      LLM_MODEL                          — Chat model slug
-      LLM_PROVIDER                       — Provider name (default: openai)
-
-      EMBEDDING_API_KEY                  — API key for embeddings (defaults to LLM key)
-      EMBEDDING_ENDPOINT                 — Embedding base URL (defaults to LLM endpoint)
-      EMBEDDING_MODEL                    — Embedding model (default: text-embedding-3-small)
-      EMBEDDING_PROVIDER                 — Embedding provider (default: openai)
+    Args:
+        cognee_module: The loaded cognee module to configure.
     """
     # ── LLM (chat completions) ────────────────────────────────────────────
     llm_api_key = (
@@ -241,7 +290,14 @@ def _configure_llm(cognee_module) -> None:
 # ---------------------------------------------------------------------------
 
 def _item_to_text(item: LifeAdminItem) -> str:
-    """Convert a LifeAdminItem to a rich text document for Cognee ingestion."""
+    """Converts a LifeAdminItem to a rich text document for Cognee ingestion.
+    
+    Args:
+        item: The LifeAdminItem to convert.
+        
+    Returns:
+        A multi-line formatted string representation of the item.
+    """
     related = ", ".join(item.related_item_ids) if item.related_item_ids else "none"
     return (
         f"Life admin item — item_id:{item.item_id}\n"
@@ -257,7 +313,16 @@ def _item_to_text(item: LifeAdminItem) -> str:
 
 
 def _normalise_results(raw: list) -> list[dict]:
-    """Normalise heterogeneous Cognee result objects into plain dicts, deduplicating by item_id."""
+    """Normalises heterogeneous Cognee result objects into plain dicts.
+    
+    Also handles deduplication by item_id and removes deleted items.
+
+    Args:
+        raw: The raw list of result objects returned by cognee.search().
+
+    Returns:
+        A list of normalised result dictionaries.
+    """
     normalised = []
     parsed_items = {}
     deleted_item_ids = set()
@@ -309,7 +374,14 @@ def _normalise_results(raw: list) -> list[dict]:
 
 
 def _parse_chunk_text(text: str) -> dict:
-    """Reconstitute a LifeAdminItem dict from the raw chunk text."""
+    """Reconstitutes a LifeAdminItem dict from raw chunk text.
+    
+    Args:
+        text: The raw chunk text stored by Cognee.
+        
+    Returns:
+        A dictionary parsed from the chunk text.
+    """
     parsed = {}
     lines = text.split("\n")
     for line in lines:

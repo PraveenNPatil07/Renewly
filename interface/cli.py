@@ -1,19 +1,16 @@
-"""
-interface/cli.py — Command-line entry point.
+"""Command-line interface entry point for Renewly.
 
-This file is pure interface plumbing — zero business logic. It:
-1. Reads the correct MemoryPort adapter from config
-2. Constructs the application service(s)
-3. Calls the service
-4. Prints the result
-
-That's it. Any logic here is a violation of SRP.
+This module acts as pure interface plumbing with zero business logic. It adheres
+strictly to the Single Responsibility Principle for the CLI layer by:
+1. Reading the active MemoryPort adapter configuration.
+2. Constructing the necessary application services.
+3. Delegating the parsed command to the appropriate service.
+4. Formatting and printing the result to standard output.
 
 Usage:
     python -m interface.cli add "Netflix subscription renews 2025-08-15, $15.99"
     python -m interface.cli ask "what is expiring this month?"
     python -m interface.cli feedback <item_id> too_early
-    python -m interface.cli feedback <item_id> just_right
     python -m interface.cli cleanup
     python -m interface.cli digest
 

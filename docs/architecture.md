@@ -14,6 +14,17 @@ Answering that requires understanding **relationships between entities across ti
 
 ---
 
+## Architecture Decision Records (ADRs)
+
+| Decision | Context | Rationale | Consequences |
+|----------|---------|-----------|--------------|
+| **1. Use Cognee (Knowledge Graph) over Relational DB** | Tracking items with temporal and inter-item relationships (e.g., warranty tied to device). | A graph database models relationships natively, allowing complex queries ("what warranties apply to the laptop I bought in March?"). Cognee simplifies vector/graph hybrid workflows. | Requires parsing data into distinct entities/edges. Vendor lock-in minimized by abstracting behind `MemoryPort`. |
+| **2. Five-Layer Architecture (DIP)** | Need to support both local and cloud modes seamlessly, and ensure high testability. | Strict separation of concerns (Interface, Application, Domain, Port, Adapter) means business logic doesn't depend on infrastructure. | slightly more boilerplate (interfaces/adapters), but enables instant local/cloud switching and zero-latency unit tests. |
+| **3. LLM Parsing with Heuristic Fallback** | Raw input is messy, but relying solely on LLMs can be brittle or expensive. | Try LLM first for best accuracy (via OpenRouter/OpenAI), but fall back to deterministic regex if no API key is set or the call fails. | Ensures the app always works gracefully even in completely offline/unconfigured environments. |
+| **4. Simulated Scheduler** | Need to demonstrate background reminders without complex infrastructure (Redis/Celery) for the hackathon. | An `asyncio` loop running `run_digest_once` proves the pipeline works without the operational burden of a real queue. | Not production-ready; would lose jobs on restart. Clear upgrade path to APScheduler/Celery documented. |
+
+---
+
 ## Five-Layer Architecture
 
 ```
