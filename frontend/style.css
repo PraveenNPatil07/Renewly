@@ -1,0 +1,989 @@
+/* ================================================================
+   RENEWLY — style.css
+   Apple-discipline design system. Four colors, one typeface.
+   ================================================================ */
+
+/* ----------------------------------------------------------------
+   1. TOKEN SYSTEM — every value lives here, nowhere else
+   ---------------------------------------------------------------- */
+:root {
+  /* Palette */
+  --ink: #1D1D1F;
+  --canvas: #FBFBFA;
+  --recall: #6E5BFF;
+  --signal: #E8A33D;
+  --hairline: #E5E5E3;
+  --ink-60: rgba(29, 29, 31, 0.60);
+  --ink-30: rgba(29, 29, 31, 0.30);
+  --ink-10: rgba(29, 29, 31, 0.07);
+  --recall-10: rgba(110, 91, 255, 0.10);
+
+  /* Type */
+  --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+
+  /* Spacing scale */
+  --sp-xs: 8px;
+  --sp-sm: 16px;
+  --sp-md: 24px;
+  --sp-lg: 48px;
+  --sp-xl: 80px;
+  --sp-2xl: 130px;
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 20px;
+  --r-pill: 100px;
+}
+
+/* ----------------------------------------------------------------
+   2. RESET & BASE
+   ---------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: var(--recall);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Accessible focus ring on every interactive element */
+:focus-visible {
+  outline: 2.5px solid var(--recall);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ----------------------------------------------------------------
+   3. LAYOUT
+   ---------------------------------------------------------------- */
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 var(--sp-md);
+}
+
+/* ----------------------------------------------------------------
+   4. TYPOGRAPHY UTILITIES
+   ---------------------------------------------------------------- */
+.section-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--recall);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: var(--sp-sm);
+}
+
+.section-headline {
+  font-size: clamp(34px, 4.2vw, 52px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+  color: var(--ink);
+  margin-bottom: var(--sp-md);
+}
+
+.section-sub {
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--ink-60);
+  max-width: 480px;
+  line-height: 1.65;
+  margin-bottom: var(--sp-lg);
+}
+
+/* ----------------------------------------------------------------
+   5. NAV
+   ---------------------------------------------------------------- */
+.nav {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px var(--sp-md);
+  background: rgba(251, 251, 250, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.nav-brand {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.nav-links {
+  display: flex;
+  gap: var(--sp-md);
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-60);
+  transition: color 0.15s ease;
+}
+
+.nav-links a:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+/* ----------------------------------------------------------------
+   6. HERO
+   ---------------------------------------------------------------- */
+.hero {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: var(--sp-xl);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 100px var(--sp-md) var(--sp-xl);
+}
+
+/* GSAP sets opacity:0 on these, so start visible for no-JS */
+.hero-text {
+  opacity: 1;
+}
+
+.hero-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+}
+
+.hero-headline {
+  font-size: clamp(44px, 6vw, 72px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
+  color: var(--ink);
+  margin-bottom: var(--sp-md);
+}
+
+.hero-sub {
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--ink-60);
+  max-width: 500px;
+  line-height: 1.65;
+  margin-bottom: var(--sp-lg);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--recall);
+  color: #fff;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 13px 26px;
+  border-radius: var(--r-pill);
+  transition: background 0.15s ease, transform 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  background: #5a48e0;
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+/* ----------------------------------------------------------------
+   7. MEMORY GRAPH (signature element)
+   ---------------------------------------------------------------- */
+.memory-graph {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  overflow: visible;
+}
+
+/* Edges — dashed, slow traveling flow */
+.graph-edge {
+  stroke: var(--hairline);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 5 12;
+  animation: edgeFlow 5s linear infinite;
+}
+
+.graph-edge:nth-child(2) {
+  animation-delay: -0.6s;
+  animation-duration: 5.5s;
+}
+
+.graph-edge:nth-child(3) {
+  animation-delay: -1.2s;
+  animation-duration: 4.5s;
+}
+
+.graph-edge:nth-child(4) {
+  animation-delay: -1.8s;
+  animation-duration: 6s;
+}
+
+.graph-edge:nth-child(5) {
+  animation-delay: -2.4s;
+  animation-duration: 5.2s;
+}
+
+.graph-edge:nth-child(6) {
+  animation-delay: -3.0s;
+  animation-duration: 4.8s;
+}
+
+.graph-edge:nth-child(7) {
+  animation-delay: -3.6s;
+  animation-duration: 5.8s;
+}
+
+.graph-edge:nth-child(8) {
+  animation-delay: -4.2s;
+  animation-duration: 5.3s;
+}
+
+@keyframes edgeFlow {
+  from {
+    stroke-dashoffset: 170;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Node rings — scale-pulse on active */
+.node-ring {
+  fill: none;
+  stroke: var(--recall);
+  stroke-width: 1.5;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity 0.55s ease;
+}
+
+/* Node dots */
+.node-dot {
+  fill: var(--ink);
+  opacity: 0.18;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: fill 0.55s ease, opacity 0.55s ease;
+}
+
+/* Labels */
+.node-label {
+  fill: var(--ink-60);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-anchor: middle;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Active node state */
+.graph-node.active .node-dot {
+  fill: var(--recall);
+  opacity: 1;
+}
+
+.graph-node.active .node-ring {
+  opacity: 0.28;
+  animation: ringPulse 1.9s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.28;
+  }
+
+  50% {
+    transform: scale(1.35);
+    opacity: 0.08;
+  }
+}
+
+/* ----------------------------------------------------------------
+   8. PROBLEM SECTION
+   ---------------------------------------------------------------- */
+.problem {
+  padding: var(--sp-2xl) 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.problem-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+}
+
+.problem-card {
+  padding: var(--sp-lg) var(--sp-md) var(--sp-lg) 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.problem-card+.problem-card {
+  padding-left: var(--sp-md);
+  border-left: 1px solid var(--hairline);
+}
+
+.problem-card p {
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.65;
+}
+
+/* ----------------------------------------------------------------
+   9. ASK SECTION
+   ---------------------------------------------------------------- */
+.ask-section {
+  padding: var(--sp-2xl) 0;
+  border-top: 1px solid var(--hairline);
+}
+
+/* OS Window chrome */
+.os-window {
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  box-shadow:
+    0 2px 8px rgba(29, 29, 31, 0.05),
+    0 8px 32px rgba(29, 29, 31, 0.06);
+  background: #ffffff;
+  max-width: 700px;
+}
+
+.os-chrome {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 16px;
+  background: #f7f7f5;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.chrome-dot {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--hairline);
+  flex-shrink: 0;
+}
+
+.chrome-title {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-60);
+  letter-spacing: 0.01em;
+}
+
+/* Thread */
+.ask-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.ask-thread {
+  min-height: 160px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: var(--sp-md);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scroll-behavior: smooth;
+}
+
+.ask-thread:empty::before {
+  content: 'Ask anything — "What\' s covered under my laptop warranty?" or " When does my gym membership renew?"';
+  font-size: 14px;
+  color: var(--ink-30);
+  font-style: italic;
+  align-self: center;
+  margin: auto;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.ask-message {
+  max-width: 82%;
+  padding: 11px 15px;
+  border-radius: 16px;
+  font-size: 15px;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.ask-message.user {
+  align-self: flex-end;
+  background: var(--recall);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.ask-message.ai {
+  align-self: flex-start;
+  background: var(--ink-10);
+  color: var(--ink);
+  border-bottom-left-radius: 4px;
+}
+
+.ask-message.loading {
+  align-self: flex-start;
+  background: var(--ink-10);
+  padding: 14px 20px;
+  border-bottom-left-radius: 4px;
+}
+
+/* Pulsing loading dots */
+.loading-dots {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.loading-dots span {
+  display: block;
+  width: 6px;
+  height: 6px;
+  background: var(--recall);
+  border-radius: 50%;
+  animation: dotPulse 1.3s ease-in-out infinite;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dotPulse {
+
+  0%,
+  60%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Input form */
+.ask-form {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  padding: 12px var(--sp-sm);
+  border-top: 1px solid var(--hairline);
+}
+
+.ask-input {
+  flex: 1;
+  border: none;
+  background: none;
+  font-family: var(--font);
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+  padding: 6px 4px;
+}
+
+.ask-input::placeholder {
+  color: var(--ink-30);
+}
+
+.ask-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--recall);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.ask-btn:hover:not(:disabled) {
+  background: #5a48e0;
+  transform: scale(1.06);
+}
+
+.ask-btn:disabled {
+  background: var(--hairline);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ----------------------------------------------------------------
+   10. LIFECYCLE / HOW IT REMEMBERS
+   ---------------------------------------------------------------- */
+.lifecycle {
+  padding: var(--sp-2xl) 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.lifecycle-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.lifecycle-step {
+  padding: var(--sp-md) var(--sp-md) var(--sp-md) 0;
+  border-top: 2px solid var(--hairline);
+  /* GSAP will animate these in on scroll */
+}
+
+.lifecycle-step+.lifecycle-step {
+  padding-left: var(--sp-md);
+}
+
+.step-num {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--recall);
+  letter-spacing: 0.06em;
+  margin-bottom: 18px;
+}
+
+.step-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.step-body {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink-60);
+  line-height: 1.65;
+}
+
+/* ----------------------------------------------------------------
+   11. ITEMS DASHBOARD
+   ---------------------------------------------------------------- */
+.items-section {
+  padding: var(--sp-2xl) 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Column header row */
+.items-header {
+  display: grid;
+  grid-template-columns: 1fr 140px 160px 80px 200px;
+  gap: var(--sp-md);
+  padding: 0 0 var(--sp-xs);
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: 2px;
+}
+
+.items-header span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-30);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Item row */
+.item-row {
+  display: grid;
+  grid-template-columns: 1fr 140px 160px 80px 200px;
+  gap: var(--sp-md);
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--hairline);
+  transition: background 0.15s ease;
+}
+
+.item-row:first-of-type {
+  border-top: 1px solid var(--hairline);
+}
+
+.item-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-vendor {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-60);
+  margin-top: 2px;
+  letter-spacing: 0.01em;
+}
+
+.item-category {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-60);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--hairline);
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.item-date {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-60);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.item-date.urgent {
+  color: var(--signal);
+  font-weight: 600;
+}
+
+.item-price {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Feedback buttons */
+.item-actions {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.feedback-btn {
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-60);
+  background: none;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+
+.feedback-btn:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--ink-30);
+  transform: translateY(-1px);
+}
+
+.feedback-btn.sent {
+  color: var(--recall);
+  border-color: var(--recall);
+  background: var(--recall-10);
+}
+
+.feedback-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Cancelled item styling — use opacity/strikethrough, no new color */
+.item-cancelled .item-name {
+  opacity: 0.38;
+  text-decoration: line-through;
+}
+
+.item-cancelled .item-vendor {
+  opacity: 0.38;
+}
+
+.item-cancelled .item-category {
+  opacity: 0.3;
+}
+
+.item-cancelled .item-date {
+  opacity: 0.3;
+}
+
+.item-cancelled .item-price {
+  opacity: 0.3;
+}
+
+.item-cancelled .item-actions {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* Loading / empty states */
+.items-loading,
+.items-empty {
+  padding: var(--sp-xl) 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--ink-60);
+  font-size: 16px;
+}
+
+/* ----------------------------------------------------------------
+   12. FOOTER
+   ---------------------------------------------------------------- */
+.footer {
+  border-top: 1px solid var(--hairline);
+  padding: var(--sp-lg) 0;
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-sm);
+}
+
+.footer-brand {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--ink-60);
+  letter-spacing: 0.01em;
+}
+
+.footer-meta a {
+  color: var(--ink-60);
+  transition: color 0.15s ease;
+}
+
+.footer-meta a:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.footer-sep {
+  color: var(--hairline);
+}
+
+/* ----------------------------------------------------------------
+   13. RESPONSIVE — everything stacks cleanly at mobile
+   ---------------------------------------------------------------- */
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding-top: 110px;
+    gap: var(--sp-lg);
+  }
+
+  /* Graph goes above text on mobile */
+  .hero-visual {
+    order: -1;
+  }
+
+  .memory-graph {
+    max-height: 260px;
+  }
+
+  .lifecycle-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lifecycle-step+.lifecycle-step {
+    padding-left: 0;
+  }
+
+  .lifecycle-step:nth-child(odd) {
+    padding-right: var(--sp-xs);
+  }
+
+  .lifecycle-step:nth-child(even) {
+    padding-left: var(--sp-xs);
+  }
+
+  .items-header {
+    display: none;
+  }
+
+  .item-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: var(--sp-xs);
+    padding: var(--sp-md) 0;
+  }
+
+  /* Reorder item row children on mobile */
+  .item-name {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .item-category {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .item-date {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .item-price {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .item-actions {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+
+  .problem-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .problem-card+.problem-card {
+    border-left: none;
+    padding-left: 0;
+    border-top: 1px solid var(--hairline);
+  }
+}
+
+@media (max-width: 520px) {
+
+  /* Hide graph at very narrow widths rather than letting it break */
+  .hero-visual {
+    display: none;
+  }
+
+  .lifecycle-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lifecycle-step:nth-child(odd),
+  .lifecycle-step:nth-child(even) {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .os-window {
+    border-radius: var(--r-sm);
+  }
+
+  .section-headline {
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ----------------------------------------------------------------
+   14. REDUCED MOTION — disable translate + pulse, keep fades
+   ---------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .graph-edge {
+    animation: none;
+    stroke-dasharray: none;
+  }
+
+  .graph-node.active .node-ring {
+    animation: none;
+  }
+
+  .loading-dots span {
+    animation: none;
+    opacity: 1;
+  }
+
+  .btn-primary:hover,
+  .ask-btn:hover:not(:disabled),
+  .feedback-btn:hover:not(:disabled) {
+    transform: none;
+  }
+}

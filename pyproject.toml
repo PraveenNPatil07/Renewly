@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "renewly"
+version = "1.0.0"
+description = "Life-Admin Memory Agent powered by Cognee"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "cognee>=0.1.0",
+    "openai>=1.0.0",
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[project.scripts]
+renewly = "interface.cli:entry_point"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["domain*", "memory*", "application*", "interface*", "scheduler*", "config*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

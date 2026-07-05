@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Renewly is a life-admin memory system that tracks your subscriptions, warranties, and renewals — so the date never sneaks up on you.">
+  <title>Renewly — Your Life Admin Memory</title>
+  <!-- Inter via Google Fonts — system font stack falls back cleanly -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       NAV — persistent, frosted
+       ═══════════════════════════════════════════════════════════════ -->
+  <header class="nav" role="banner">
+    <span class="nav-brand">Renewly</span>
+    <nav class="nav-links" aria-label="Page sections">
+      <a href="#ask">Ask</a>
+      <a href="#items">Your Items</a>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         HERO — headline + memory graph
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="hero" id="hero" aria-labelledby="hero-headline">
+
+      <div class="hero-text" id="hero-text">
+        <h1 class="hero-headline" id="hero-headline">Never forget<br>what renews next.</h1>
+        <p class="hero-sub" id="hero-sub">Your subscriptions renew. Your warranties expire. There has never been one place that remembers when — until now.</p>
+        <a href="#ask" class="btn-primary" id="hero-cta">Ask your memory</a>
+      </div>
+
+      <!-- ── Signature graph visualization ── -->
+      <div class="hero-visual" id="hero-visual">
+        <svg class="memory-graph" viewBox="0 0 580 445" xmlns="http://www.w3.org/2000/svg"
+             aria-hidden="true" focusable="false">
+
+          <!-- ─ Edges ─ -->
+          <g class="graph-edges">
+            <!-- Netflix ↔ Laptop Warranty -->
+            <line class="graph-edge" x1="115" y1="90" x2="290" y2="192"/>
+            <!-- Car Insurance ↔ Laptop Warranty -->
+            <line class="graph-edge" x1="455" y1="110" x2="290" y2="192"/>
+            <!-- Car Insurance ↔ Health Insurance -->
+            <line class="graph-edge" x1="455" y1="110" x2="492" y2="278"/>
+            <!-- Laptop Warranty ↔ Gym Membership -->
+            <line class="graph-edge" x1="290" y1="192" x2="88" y2="295"/>
+            <!-- Laptop Warranty ↔ Dell XPS -->
+            <line class="graph-edge" x1="290" y1="192" x2="418" y2="370"/>
+            <!-- Gym Membership ↔ Phone Plan -->
+            <line class="graph-edge" x1="88" y1="295" x2="208" y2="385"/>
+            <!-- Health Insurance ↔ Dell XPS -->
+            <line class="graph-edge" x1="492" y1="278" x2="418" y2="370"/>
+            <!-- Phone Plan ↔ Dell XPS -->
+            <line class="graph-edge" x1="208" y1="385" x2="418" y2="370"/>
+          </g>
+
+          <!-- ─ Nodes (ring + dot + label) ─ -->
+          <g class="graph-nodes">
+
+            <!-- 1 · Netflix -->
+            <g class="graph-node" data-index="0">
+              <circle class="node-ring" cx="115" cy="90" r="22"/>
+              <circle class="node-dot"  cx="115" cy="90" r="9"/>
+              <text class="node-label" x="115" y="120">Netflix</text>
+            </g>
+
+            <!-- 2 · Car Insurance -->
+            <g class="graph-node" data-index="1">
+              <circle class="node-ring" cx="455" cy="110" r="22"/>
+              <circle class="node-dot"  cx="455" cy="110" r="9"/>
+              <text class="node-label" x="455" y="140">Car Insurance</text>
+            </g>
+
+            <!-- 3 · Laptop Warranty -->
+            <g class="graph-node" data-index="2">
+              <circle class="node-ring" cx="290" cy="192" r="22"/>
+              <circle class="node-dot"  cx="290" cy="192" r="9"/>
+              <text class="node-label" x="290" y="222">Warranty</text>
+            </g>
+
+            <!-- 4 · Gym Membership -->
+            <g class="graph-node" data-index="3">
+              <circle class="node-ring" cx="88" cy="295" r="22"/>
+              <circle class="node-dot"  cx="88" cy="295" r="9"/>
+              <text class="node-label" x="88" y="325">Gym</text>
+            </g>
+
+            <!-- 5 · Health Insurance -->
+            <g class="graph-node" data-index="4">
+              <circle class="node-ring" cx="492" cy="278" r="22"/>
+              <circle class="node-dot"  cx="492" cy="278" r="9"/>
+              <text class="node-label" x="492" y="308">Health</text>
+            </g>
+
+            <!-- 6 · Phone Plan -->
+            <g class="graph-node" data-index="5">
+              <circle class="node-ring" cx="208" cy="385" r="22"/>
+              <circle class="node-dot"  cx="208" cy="385" r="9"/>
+              <text class="node-label" x="208" y="415">Phone Plan</text>
+            </g>
+
+            <!-- 7 · Dell XPS -->
+            <g class="graph-node" data-index="6">
+              <circle class="node-ring" cx="418" cy="370" r="22"/>
+              <circle class="node-dot"  cx="418" cy="370" r="9"/>
+              <text class="node-label" x="418" y="400">Dell XPS</text>
+            </g>
+
+          </g>
+        </svg>
+      </div>
+    </section><!-- /hero -->
+
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         THE PROBLEM — three quiet scenario cards
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="problem" aria-label="The problem Renewly solves">
+      <div class="container">
+        <div class="problem-grid">
+
+          <article class="problem-card">
+            <p>You forgot to cancel a free trial. It quietly charged you for four months before you noticed.</p>
+          </article>
+
+          <article class="problem-card">
+            <p>Your laptop warranty expired last week. You find out the morning the screen cracks.</p>
+          </article>
+
+          <article class="problem-card">
+            <p>Your car insurance renewed at a higher rate. By the time you noticed, the payment had already cleared.</p>
+          </article>
+
+        </div>
+      </div>
+    </section><!-- /problem -->
+
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         ASK YOUR MEMORY — live, wired to POST /query
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="ask-section" id="ask" aria-labelledby="ask-headline">
+      <div class="container">
+        <p class="section-eyebrow">Ask Your Memory</p>
+        <h2 class="section-headline" id="ask-headline">The answer is<br>already in there.</h2>
+        <p class="section-sub">Type a question in plain English. Renewly searches everything you've told it and answers conversationally.</p>
+
+        <div class="os-window" role="region" aria-label="Memory query interface">
+          <div class="os-chrome" aria-hidden="true">
+            <span class="chrome-dot"></span>
+            <span class="chrome-dot"></span>
+            <span class="chrome-dot"></span>
+            <span class="chrome-title">Renewly Memory</span>
+          </div>
+          <div class="ask-body">
+            <div class="ask-thread" id="ask-thread"
+                 role="log" aria-live="polite" aria-label="Conversation thread">
+              <!-- Messages rendered by script.js -->
+            </div>
+            <form class="ask-form" id="ask-form" novalidate>
+              <input
+                type="text"
+                id="ask-input"
+                class="ask-input"
+                placeholder="What's covered under my laptop warranty?"
+                autocomplete="off"
+                spellcheck="false"
+                aria-label="Ask a question about your life admin items"
+              >
+              <button type="submit" id="ask-btn" class="ask-btn"
+                      aria-label="Submit question">
+                <!-- Hand-drawn arrow, 1.5px stroke -->
+                <svg width="17" height="17" viewBox="0 0 17 17" fill="none"
+                     stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round"
+                     aria-hidden="true" focusable="false">
+                  <path d="M3 8.5H14M9.5 4L14 8.5L9.5 13"/>
+                </svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section><!-- /ask -->
+
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         HOW IT REMEMBERS — four-step lifecycle, scroll-revealed
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="lifecycle" aria-labelledby="lifecycle-headline">
+      <div class="container">
+        <p class="section-eyebrow">How It Remembers</p>
+        <h2 class="section-headline" id="lifecycle-headline">A four-step<br>memory cycle.</h2>
+        <div class="lifecycle-grid" id="lifecycle-grid">
+
+          <div class="lifecycle-step" data-step="0">
+            <span class="step-num">01</span>
+            <h3 class="step-title">You tell it once.</h3>
+            <p class="step-body">Drop a renewal, warranty, or subscription into Renewly in plain English. It extracts the what, the when, and the who — no forms, no fields.</p>
+          </div>
+
+          <div class="lifecycle-step" data-step="1">
+            <span class="step-num">02</span>
+            <h3 class="step-title">It never forgets to answer.</h3>
+            <p class="step-body">Ask anything: "When does my car insurance renew?" It finds the answer from what you've already told it — no search, no scrolling through emails.</p>
+          </div>
+
+          <div class="lifecycle-step" data-step="2">
+            <span class="step-num">03</span>
+            <h3 class="step-title">It learns your timing.</h3>
+            <p class="step-body">Tell it if a reminder came too early or too late. It adjusts. After a few signals, it knows exactly when you want to hear about a renewal.</p>
+          </div>
+
+          <div class="lifecycle-step" data-step="3">
+            <span class="step-num">04</span>
+            <h3 class="step-title">Old items disappear cleanly.</h3>
+            <p class="step-body">Cancelled a subscription? Renewly marks it handled and removes it from your active view. No clutter from things that no longer apply.</p>
+          </div>
+
+        </div>
+      </div>
+    </section><!-- /lifecycle -->
+
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         YOUR ITEMS — live dashboard, wired to GET /list
+         ═══════════════════════════════════════════════════════════════ -->
+    <section class="items-section" id="items" aria-labelledby="items-headline">
+      <div class="container">
+        <p class="section-eyebrow">Your Items</p>
+        <h2 class="section-headline" id="items-headline">What Renewly<br>currently remembers.</h2>
+        <p class="section-sub">Live data, right now. Tell it how each reminder landed — it gets better every time.</p>
+
+        <div class="items-header" aria-hidden="true">
+          <span>Item</span>
+          <span>Category</span>
+          <span>Date</span>
+          <span>Price</span>
+          <span>Feedback</span>
+        </div>
+
+        <div class="items-list" id="items-list"
+             role="list" aria-label="Your stored life admin items">
+          <div class="items-loading" id="items-loading"
+               aria-live="polite" aria-label="Loading your items">
+            <span class="loading-dots" aria-label="Loading">
+              <span></span><span></span><span></span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section><!-- /items -->
+
+  </main>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       FOOTER — minimal disclosure
+       ═══════════════════════════════════════════════════════════════ -->
+  <footer class="footer" role="contentinfo">
+    <div class="container footer-inner">
+      <span class="footer-brand">Renewly</span>
+      <div class="footer-meta">
+        <a href="https://github.com/yourusername/renewly"
+           target="_blank" rel="noopener noreferrer">GitHub</a>
+        <span class="footer-sep" aria-hidden="true">·</span>
+        <span>Built for WeMakeDevs &times; Cognee Hackathon 2026</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- GSAP — CDN, no npm, no build step. ScrollTrigger for lifecycle reveal. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
